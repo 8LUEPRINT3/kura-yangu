@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Find your nearest IEBC voter registration center in Kenya. Privacy-first — your location never leaves your device.">
+<!-- Security Headers (meta-tag equivalents for GitHub Pages static hosting) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://www.google.com;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="geolocation=(self), camera=(), microphone=(), payment=()">
 <title>Kura Yangu 🗳️ — Kenya Voter Registration Locator</title>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -427,18 +432,23 @@ function mapsUrl(c) {
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
 function renderCard(c, rank, distKm) {
   const dist = distKm !== undefined ? `<span class="distance-badge">📏 ${distKm < 1 ? (distKm*1000).toFixed(0)+'m' : distKm.toFixed(1)+' km'}</span>` : '';
   const rankBadge = rank ? `<span class="rank-num">${rank}</span>` : '';
+  const url = esc(mapsUrl(c));
   return `
   <div class="result-card">
     <div class="result-header">
-      <div class="result-title">${rankBadge}🏛️ ${c.constituency} Constituency Office — ${c.county} County</div>
+      <div class="result-title">${rankBadge}🏛️ ${esc(c.constituency)} Constituency Office — ${esc(c.county)} County</div>
       ${dist}
     </div>
-    <div class="result-row"><span class="icon">📍</span><span><strong>Office:</strong> ${c.location}</span></div>
-    <div class="result-row"><span class="icon">🏛️</span><span><strong>Near:</strong> ${c.landmark}</span></div>
-    <div class="result-row"><span class="icon">🗺️</span><a href="${mapsUrl(c)}" target="_blank" rel="noopener">View on Google Maps</a></div>
+    <div class="result-row"><span class="icon">📍</span><span><strong>Office:</strong> ${esc(c.location)}</span></div>
+    <div class="result-row"><span class="icon">🏛️</span><span><strong>Near:</strong> ${esc(c.landmark)}</span></div>
+    <div class="result-row"><span class="icon">🗺️</span><a href="${url}" target="_blank" rel="noopener noreferrer">View on Google Maps</a></div>
     <div class="result-meta">
       <div class="result-row"><span class="icon">📋</span><span>Required: Original National ID Card (or Passport)</span></div>
       <div class="result-row"><span class="icon">⏰</span><span>Hours: Mon–Fri 8:00 AM – 5:00 PM (verify with IEBC)</span></div>
