@@ -428,8 +428,8 @@ function haversine(lat1, lng1, lat2, lng2) {
 }
 
 function mapsUrl(c) {
-  const q = encodeURIComponent(`IEBC ${c.constituency} Constituency Office ${c.county} Kenya`);
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  // Use coordinates so Maps opens the exact location, not a text-matched guess
+  return `https://www.google.com/maps?q=${c.lat},${c.lng}`;
 }
 
 function esc(str) {
@@ -488,6 +488,14 @@ function useGPS() {
   navigator.geolocation.getCurrentPosition(
     pos => {
       const {latitude: lat, longitude: lng} = pos.coords;
+      // Kenya bounding box: roughly lat -4.7 to 4.6, lng 33.9 to 41.9
+      const inKenya = lat >= -4.7 && lat <= 4.6 && lng >= 33.9 && lng <= 41.9;
+      if (!inKenya) {
+        status.innerHTML = '<span class="status-msg error">⚠️ Your GPS shows you\'re outside Kenya. Please use Browse Mode to search by county/constituency.</span>';
+        btn.disabled = false;
+        btn.textContent = '📍 Update Location';
+        return;
+      }
       const sorted = CENTERS.map(c => ({...c, dist: haversine(lat, lng, c.lat, c.lng)}))
         .sort((a,b) => a.dist - b.dist).slice(0, 3);
       status.innerHTML = '<span class="status-msg">✅ Found! Showing 3 nearest centers.</span>';
