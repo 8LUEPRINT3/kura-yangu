@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Find your nearest IEBC voter registration center in Kenya. Privacy-first — your location never leaves your device.">
+<title>Kura Yangu 🗳️ — Kenya Voter Registration Locator</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0a0a;
+    --surface:#141414;
+    --surface2:#1e1e1e;
+    --green:#006600;
+    --green-light:#00aa00;
+    --red:#BB0000;
+    --text:#f0f0f0;
+    --muted:#999;
+    --border:#2a2a2a;
+    --radius:10px;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;line-height:1.6;font-size:16px}
+  header{background:linear-gradient(135deg,#0a2a0a 0%,#0a0a0a 60%,#1a0a0a 100%);border-bottom:3px solid var(--green);padding:1.5rem 1rem 1rem;text-align:center;position:relative;overflow:hidden}
+  header::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#006600 33%,#000 33% 66%,#BB0000 66%)}
+  h1{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:800;letter-spacing:-0.5px;margin-bottom:.3rem}
+  h1 span.k{color:var(--green-light)}
+  h1 span.y{color:#f0f0f0}
+  .tagline{color:var(--muted);font-size:.95rem;margin-bottom:.6rem}
+  .privacy-badge{display:inline-flex;align-items:center;gap:.4rem;background:#0d1f0d;border:1px solid #1a4d1a;color:#5dd05d;padding:.35rem .8rem;border-radius:20px;font-size:.8rem;font-weight:600}
+  main{max-width:700px;margin:0 auto;padding:1rem}
+  .tabs{display:flex;background:var(--surface);border-radius:var(--radius);overflow:hidden;margin-bottom:1.5rem;border:1px solid var(--border)}
+  .tab{flex:1;padding:.75rem 1rem;text-align:center;cursor:pointer;font-size:.9rem;font-weight:600;color:var(--muted);transition:all .2s;border:none;background:none}
+  .tab.active{background:var(--green);color:#fff}
+  .tab:hover:not(.active){background:var(--surface2);color:var(--text)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+  .gps-center{text-align:center;padding:2rem 1rem}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.85rem 2rem;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none}
+  .btn-primary{background:var(--green);color:#fff;width:100%;max-width:320px}
+  .btn-primary:hover{background:var(--green-light);transform:translateY(-1px)}
+  .btn-primary:disabled{background:#333;color:#666;cursor:not-allowed;transform:none}
+  .btn-share{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:.5rem 1rem;font-size:.85rem;border-radius:6px;cursor:pointer}
+  .btn-share:hover{background:#2a2a2a}
+  label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.4rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  select{width:100%;padding:.75rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.95rem;margin-bottom:1rem;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;cursor:pointer}
+  select:focus{outline:2px solid var(--green);border-color:var(--green)}
+  select option{background:#1e1e1e}
+  .result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;animation:fadeIn .3s ease}
+  .result-card + .result-card{border-top:none;margin-top:-1px;border-radius:0}
+  .result-card:first-child{border-radius:var(--radius) var(--radius) 0 0}
+  .result-card:last-child{border-radius:0 0 var(--radius) var(--radius)}
+  .result-card:only-child{border-radius:var(--radius)}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .result-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.75rem}
+  .result-title{font-size:1rem;font-weight:700;color:var(--green-light)}
+  .distance-badge{background:#0d1f0d;border:1px solid #1a4d1a;color:#5dd05d;padding:.2rem .6rem;border-radius:12px;font-size:.75rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+  .result-row{display:flex;gap:.5rem;margin-bottom:.4rem;font-size:.9rem}
+  .result-row .icon{flex-shrink:0;width:1.2em}
+  .result-row a{color:var(--green-light);text-decoration:none}
+  .result-row a:hover{text-decoration:underline}
+  .result-meta{border-top:1px solid var(--border);margin-top:.75rem;padding-top:.75rem;display:flex;flex-direction:column;gap:.3rem}
+  .result-meta .result-row{color:var(--muted);font-size:.85rem}
+  .result-footer{display:flex;justify-content:flex-end;margin-top:.75rem}
+  .opsec-tip{background:#1a0a00;border:1px solid #4a2200;border-radius:var(--radius);padding:1rem 1.25rem;margin-top:1rem;font-size:.85rem;color:#cc9966}
+  .status-msg{text-align:center;color:var(--muted);padding:1rem;font-size:.9rem}
+  .status-msg.error{color:#ff6b6b}
+  .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid #333;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:.5rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .rank-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:var(--green);color:#fff;border-radius:50%;font-size:.75rem;font-weight:700;flex-shrink:0;margin-right:.25rem}
+  footer{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border);margin-top:2rem}
+  footer a{color:var(--green-light);text-decoration:none}
+  @media(max-width:400px){h1{font-size:1.6rem}.btn-primary{max-width:100%}.result-header{flex-direction:column}.distance-badge{align-self:flex-start}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="k">Kura</span> <span class="y">Yangu</span> 🗳️</h1>
+  <p class="tagline">Find your nearest IEBC voter registration center in seconds.</p>
+  <span class="privacy-badge">🔒 Your location never leaves your device</span>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('gps')">📍 GPS Mode</button>
+    <button class="tab" onclick="switchTab('browse')">🗺️ Browse Mode</button>
+  </div>
+
+  <!-- GPS Panel -->
+  <div id="panel-gps" class="panel active">
+    <div class="gps-center">
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.95rem">We'll calculate the 3 nearest centers entirely in your browser.<br>No GPS data is ever sent to any server.</p>
+      <button class="btn btn-primary" id="gps-btn" onclick="useGPS()">📍 Use My Location</button>
+      <div id="gps-status" style="margin-top:1rem"></div>
+    </div>
+    <div id="gps-results"></div>
+  </div>
+
+  <!-- Browse Panel -->
+  <div id="panel-browse" class="panel">
+    <div class="card">
+      <label for="county-select">County</label>
+      <select id="county-select" onchange="onCountyChange()">
+        <option value="">— Select a county —</option>
+      </select>
+      <label for="constituency-select">Constituency</label>
+      <select id="constituency-select" disabled onchange="onConstituencyChange()">
+        <option value="">— Select a constituency —</option>
+      </select>
+    </div>
+    <div id="browse-results"></div>
+  </div>
+</main>
+
+<footer>
+  <p>Data sourced from IEBC. Verify details at <a href="https://www.iebc.or.ke" target="_blank" rel="noopener">iebc.or.ke</a> before visiting.</p>
+  <p style="margin-top:.5rem">Kura Yangu — Privacy-first voter tools for Kenya 🇰🇪</p>
+</footer>
+
+<script>
+const CENTERS = [
+  {county:"Nairobi",constituency:"Westlands",location:"DC Compound",landmark:"Safaricom Centre",lat:-1.2636,lng:36.8082},
+  {county:"Nairobi",constituency:"Dagoretti North",location:"Maliposa Apartments, Ngong Road",landmark:"Nakumatt Junction",lat:-1.2921,lng:36.7505},
+  {county:"Nairobi",constituency:"Dagoretti South",location:"Maisha Poa Centre",landmark:"DCC Office Dagoretti South",lat:-1.3205,lng:36.7498},
+  {county:"Nairobi",constituency:"Langata",location:"Langata Subcounty Headquarters, Five Star Road",landmark:"Five Star Road",lat:-1.3424,lng:36.7654},
+  {county:"Nairobi",constituency:"Kibra",location:"Kibra DC",landmark:"Adjacent To Huduma Centre",lat:-1.3100,lng:36.7900},
+  {county:"Nairobi",constituency:"Roysambu",location:"Kahawa West ACC's Office/Police Station",landmark:"ACC Office/Police Station",lat:-1.2100,lng:36.8800},
+  {county:"Nairobi",constituency:"Kasarani",location:"Former DCC Offices",landmark:"Chiefs Office Nearby",lat:-1.2233,lng:36.8981},
+  {county:"Nairobi",constituency:"Ruaraka",location:"Matigari General Merchants",landmark:"Lexx Place Hotel",lat:-1.2522,lng:36.8856},
+  {county:"Nairobi",constituency:"Embakasi South",location:"Villa Franca",landmark:"Equity Afya Hospital Banner",lat:-1.3523,lng:36.9105},
+  {county:"Nairobi",constituency:"Embakasi North",location:"Near DCC Office",landmark:"DCC Office",lat:-1.2703,lng:36.9302},
+  {county:"Nairobi",constituency:"Embakasi Central",location:"DO's Office Kayole",landmark:"DO's Office Kayole",lat:-1.2975,lng:36.9068},
+  {county:"Nairobi",constituency:"Embakasi East",location:"East Africa School of Aviation",landmark:"EASA",lat:-1.2957,lng:36.9520},
+  {county:"Nairobi",constituency:"Embakasi West",location:"Tena White House",landmark:"Foot Bridge next to Shell Petrol Station, Manyanja Road",lat:-1.2997,lng:36.8895},
+  {county:"Nairobi",constituency:"Makadara",location:"Makadara DCC Compound",landmark:"CIPU Office Makadara",lat:-1.2933,lng:36.8529},
+  {county:"Nairobi",constituency:"Kamukunji",location:"DCC HQ Kamukunji",landmark:"DCC Office",lat:-1.2833,lng:36.8471},
+  {county:"Nairobi",constituency:"Starehe",location:"Kenya Railways Block D",landmark:"Opposite Technical University of Kenya",lat:-1.2838,lng:36.8271},
+  {county:"Nairobi",constituency:"Mathare",location:"Mathare DCC Compound",landmark:"DCC Office",lat:-1.2551,lng:36.8540},
+  {county:"Mombasa",constituency:"Changamwe",location:"At Changamwe Fire Station",landmark:"Changamwe Fire Station",lat:-4.0435,lng:39.6290},
+  {county:"Mombasa",constituency:"Jomvu",location:"Mikindani Police Station",landmark:"Mikindani Police Station",lat:-4.0210,lng:39.6810},
+  {county:"Mombasa",constituency:"Kisauni",location:"Bamburi Fisheries, Shangaza Estate House 9",landmark:"Supa Loaf Bakery",lat:-3.9981,lng:39.6815},
+  {county:"Mombasa",constituency:"Nyali",location:"Chiefs Office Kongowea",landmark:"DCC Nyali's Office",lat:-4.0200,lng:39.7050},
+  {county:"Mombasa",constituency:"Likoni",location:"Shika Adabu",landmark:"Shika Adabu Chiefs Office",lat:-4.0850,lng:39.6650},
+  {county:"Mombasa",constituency:"Mvita",location:"Kizingo, Rashid Sajad Road",landmark:"Chef Royale Restaurant",lat:-4.0550,lng:39.6680},
+  {county:"Kwale",constituency:"Msambweni",location:"Msambweni DCC's Office Compound",landmark:"Subcounty Headquarters of Msambweni",lat:-4.4700,lng:39.4900},
+  {county:"Kwale",constituency:"Lungalunga",location:"Mbuyuni Area Next to Rafiki Yetu Building",landmark:"Mnarani Communication Mast",lat:-4.5500,lng:39.1100},
+  {county:"Kwale",constituency:"Matuga",location:"IEBC Offices, Kwale Town, Opposite Ministry of Information Offices",landmark:"Baraza Park, Kwale Town",lat:-4.1800,lng:39.4100},
+  {county:"Kwale",constituency:"Kinango",location:"Bebora Plaza, 3rd Floor, Kinango Town",landmark:"Chief's Office Kinango Town",lat:-4.1400,lng:39.1500},
+  {county:"Kilifi",constituency:"Kilifi North",location:"Next To Huduma Centre Kilifi",landmark:"Kilifi Bridge",lat:-3.5300,lng:39.8500},
+  {county:"Kilifi",constituency:"Kilifi South",location:"Majengo Kanamai",landmark:"Matatu Terminus - Majengo Kanamai",lat:-3.6300,lng:39.8500},
+  {county:"Kilifi",constituency:"Kaloleni",location:"Adjacent To St. Johns Girls Secondary School",landmark:"ACK Church Kaloleni",lat:-3.8020,lng:39.6200},
+  {county:"Kilifi",constituency:"Rabai",location:"Shikaadabu",landmark:"CDF Office/Shikaadabu Dispensary",lat:-3.9200,lng:39.5200},
+  {county:"Kilifi",constituency:"Ganze",location:"Ganze Town",landmark:"Ganze Sub-County Police HQ",lat:-3.5000,lng:39.5500},
+  {county:"Kilifi",constituency:"Malindi",location:"Maweni Area, Near Judo",landmark:"Malindi Sub-County Hospital",lat:-3.2190,lng:40.1169},
+  {county:"Kilifi",constituency:"Magarini",location:"Near Mwembe Resort",landmark:"Mwembe Resort",lat:-3.0700,lng:39.9500},
+  {county:"Tana River",constituency:"Garsen",location:"Garsen Town",landmark:"KCB Bank",lat:-2.2700,lng:40.1000},
+  {county:"Tana River",constituency:"Galole",location:"Hola Town",landmark:"Kenya Medical Training",lat:-1.4700,lng:40.0300},
+  {county:"Tana River",constituency:"Bura",location:"Bura Town",landmark:"National Government Offices",lat:-1.1000,lng:39.9500},
+  {county:"Lamu",constituency:"Lamu East",location:"Batuli Mudh-hir Haji Building, Faza",landmark:"Post Office, Faza",lat:-2.0400,lng:41.0000},
+  {county:"Lamu",constituency:"Lamu West",location:"Ministry of Housing Office Building, Mokowe",landmark:"Public Work Office, Mokowe",lat:-2.1600,lng:40.9100},
+  {county:"Taita Taveta",constituency:"Taveta",location:"Next to Probation Office Taveta",landmark:"Probation Office Taveta",lat:-3.3950,lng:37.6900},
+  {county:"Taita Taveta",constituency:"Wundanyi",location:"Along Administration Offices, DCC Office",landmark:"Next to Kenya Forest Service County Office",lat:-3.3950,lng:38.3600},
+  {county:"Taita Taveta",constituency:"Mwatate",location:"Mwatate Old Market, Along Wundanyi Road",landmark:"TAVEVO Water and Sewerage Company",lat:-3.5000,lng:38.3700},
+  {county:"Taita Taveta",constituency:"Voi",location:"Behind Taita Taveta County Public Service Board",landmark:"Voi Remand GK Prison",lat:-3.3960,lng:38.5560},
+  {county:"Garissa",constituency:"Garissa Township",location:"Off Lamu Road, Behind Ministry of Water Garage",landmark:"Ministry of Water Garage",lat:-0.4532,lng:42.0000},
+  {county:"Garissa",constituency:"Balambala",location:"Balambala Town Next To DC's Office",landmark:"DC's Office",lat:-0.2500,lng:40.4500},
+  {county:"Garissa",constituency:"Lagdera",location:"Modogashe Town, Opposite Police Station",landmark:"Police Station",lat:0.3800,lng:39.9200},
+  {county:"Garissa",constituency:"Dadaab",location:"Dadaab Town, Opposite UN Compound",landmark:"UN Compound",lat:0.0500,lng:40.3200},
+  {county:"Garissa",constituency:"Fafi",location:"Next To DC's Office",landmark:"DC's Office",lat:0.0000,lng:41.0000},
+  {county:"Garissa",constituency:"Ijara",location:"Masalani Town, Next To DC's Office",landmark:"DC's Office",lat:-0.5600,lng:41.3200},
+  {county:"Wajir",constituency:"Wajir North",location:"Bute",landmark:"Police Station",lat:2.2000,lng:39.8000},
+  {county:"Wajir",constituency:"Wajir East",location:"Wajir Town",landmark:"Huduma Centre",lat:1.7500,lng:40.0600},
+  {county:"Wajir",constituency:"Tarbaj",location:"Tarbaj",landmark:"Ward Administrator's Office",lat:1.4900,lng:40.4000},
+  {county:"Wajir",constituency:"Wajir West",location:"Giriftu",landmark:"DCC's Office",lat:1.5500,lng:39.4500},
+  {county:"Wajir",constituency:"Eldas",location:"Eldas",landmark:"DC's Residence",lat:1.8000,lng:39.6000},
+  {county:"Wajir",constituency:"Wajir South",location:"Habaswein",landmark:"AP Camp",lat:1.0100,lng:39.5000},
+  {county:"Mandera",constituency:"Banissa",location:"Banissa Town, Along Banissa-Rhamu Road",landmark:"Next to Malkamari Hotel",lat:3.7000,lng:41.3500},
+  {county:"Mandera",constituency:"Mandera West",location:"Opposite Takaba Primary Main Gate",landmark:"Takaba Primary School",lat:3.5000,lng:41.1500},
+  {county:"Mandera",constituency:"Mandera North",location:"Inside Mandera North DCC's Compound",landmark:"DCC Compound",lat:4.0000,lng:41.5000},
+  {county:"Mandera",constituency:"Mandera South",location:"Elwak CBD Along Elwak-Wajir Road",landmark:"Dido Petrol Station",lat:3.0000,lng:40.8500},
+  {county:"Mandera",constituency:"Mandera East",location:"Off Suftu Road Behind Blue Light Petrol Station",landmark:"Blue Light Petrol Station",lat:3.9300,lng:41.8500},
+  {county:"Mandera",constituency:"Lafey",location:"Lafey Town",landmark:"Next To Lafey Primary School",lat:3.7500,lng:41.0000},
+  {county:"Marsabit",constituency:"Moyale",location:"ACK Moyale",landmark:"St. Paul Training Center",lat:3.5200,lng:39.0600},
+  {county:"Marsabit",constituency:"North Horr",location:"Nyota Self Help Group North Horr",landmark:"Adjacent to AP Camp",lat:3.3200,lng:37.0600},
+  {county:"Marsabit",constituency:"Saku",location:"ACK Saku Offices Building",landmark:"St. Peter Cathedral",lat:2.3400,lng:37.9900},
+  {county:"Marsabit",constituency:"Laisamis",location:"DCC Office Laisamis",landmark:"DCC Office",lat:1.6000,lng:37.8000},
+  {county:"Isiolo",constituency:"Isiolo North",location:"Isiolo Town, Opposite Isiolo County Assembly",landmark:"Isiolo County Assembly",lat:0.3540,lng:37.5820},
+  {county:"Isiolo",constituency:"Isiolo South",location:"Garbatulla Town",landmark:"Garbatulla Catholic Mission",lat:0.5000,lng:38.5000},
+  {county:"Meru",constituency:"Buuri",location:"Timau, DCC Buuri West Office",landmark:"DCC Buuri West Office",lat:0.1500,lng:37.1000},
+  {county:"Meru",constituency:"Igembe Central",location:"Kangeta, DCC Office",landmark:"DCC Office",lat:0.3200,lng:37.8500},
+  {county:"Meru",constituency:"Igembe North",location:"Laare",landmark:"Shell Petrol Station, Kajuko Centre",lat:0.4500,lng:37.9500},
+  {county:"Meru",constituency:"Tigania West",location:"Kianjai Town",landmark:"Kianjai National Bank",lat:0.1800,lng:37.6500},
+  {county:"Meru",constituency:"Tigania East",location:"Muriri DCC Compound",landmark:"DCC Office",lat:0.3000,lng:37.8000},
+  {county:"Meru",constituency:"North Imenti",location:"Meru Town",landmark:"Meru Huduma Center",lat:0.0500,lng:37.6500},
+  {county:"Meru",constituency:"Igembe South",location:"Maua Town",landmark:"Maua Police Station",lat:0.2000,lng:37.9200},
+  {county:"Meru",constituency:"Central Imenti",location:"Gatimbi Market",landmark:"Equator Signpost",lat:0.0200,lng:37.6500},
+  {county:"Meru",constituency:"South Imenti",location:"Nkubu",landmark:"Consolata Hospital Nkubu",lat:-0.1500,lng:37.5500},
+  {county:"Tharaka-Nithi",constituency:"Maara",location:"DCC Compound, Kienganguru",landmark:"DCC Compound",lat:-0.3500,lng:37.8500},
+  {county:"Tharaka-Nithi",constituency:"Chuka/Igambang'ombe",location:"Chuka Town, Sub County Office Compound",landmark:"Opposite Trans National Bank",lat:-0.3300,lng:37.6500},
+  {county:"Tharaka-Nithi",constituency:"Tharaka",location:"Marimanti Town, DCC Compound",landmark:"DCC Offices",lat:-0.1000,lng:38.0000},
+  {county:"Embu",constituency:"Manyatta",location:"Embu Town, Along Embu-Meru Highway",landmark:"ACK Embu Cathedral Church",lat:-0.5300,lng:37.4500},
+  {county:"Embu",constituency:"Runyenjes",location:"Embu East DCC Building, 1st Floor",landmark:"DCC Offices, Embu East",lat:-0.4200,lng:37.6500},
+  {county:"Embu",constituency:"Mbeere South",location:"Kiritiri Town",landmark:"DCC Offices, Mbeere East Subcounty",lat:-0.6000,lng:37.7000},
+  {county:"Embu",constituency:"Mbeere North",location:"DCC Compound Mbeere North Subcounty",landmark:"DCC Offices",lat:-0.4000,lng:37.7500},
+  {county:"Kitui",constituency:"Mwingi North",location:"Kyuso Town",landmark:"Behind Equity Bank",lat:-0.9000,lng:38.0000},
+  {county:"Kitui",constituency:"Mwingi West",location:"Migwani Market, Inside DCC Office Complex",landmark:"Baraza Park",lat:-1.0500,lng:38.0000},
+  {county:"Kitui",constituency:"Mwingi Central",location:"Mwingi Town, Opposite NCPB Mwingi Depot",landmark:"National Cereals and Produce Board, Mwingi",lat:-1.1000,lng:38.0600},
+  {county:"Kitui",constituency:"Kitui West",location:"Matinyani",landmark:"Matinyani DCC Offices",lat:-1.2500,lng:37.8000},
+  {county:"Kitui",constituency:"Kitui Rural",location:"Kwa Vonza Town",landmark:"Kitui Rural CDF Building",lat:-1.3500,lng:37.9000},
+  {county:"Kitui",constituency:"Kitui Central",location:"Along DCC-Kitui Hospital Road, Opposite Kafoca Hotel",landmark:"Kafoca Hotel",lat:-1.3700,lng:38.0100},
+  {county:"Kitui",constituency:"Kitui East",location:"Zombe Town",landmark:"Zombe Police Station",lat:-1.3000,lng:38.3000},
+  {county:"Kitui",constituency:"Kitui South",location:"Ikutha Town",landmark:"Opposite Registry Office",lat:-1.9000,lng:38.2000},
+  {county:"Machakos",constituency:"Masinga",location:"Masinga Town, Opposite MULKAS Petrol Station",landmark:"MULKAS Petrol Station",lat:-1.0800,lng:37.5300},
+  {county:"Machakos",constituency:"Yatta",location:"NCPB Compound, Kithimani",landmark:"NCPB Kithimani",lat:-1.1000,lng:37.4000},
+  {county:"Machakos",constituency:"Kangundo",location:"Ministry of Works Building, Opposite Kangundo General Hospital",landmark:"Kangundo General Hospital",lat:-1.2500,lng:37.3400},
+  {county:"Machakos",constituency:"Matungulu",location:"Kangundo Junior School, Within Tala Town",landmark:"Tala Town",lat:-1.2000,lng:37.4000},
+  {county:"Machakos",constituency:"Kathiani",location:"DCCs Office Block",landmark:"DCC Office",lat:-1.3500,lng:37.2000},
+  {county:"Machakos",constituency:"Mavoko",location:"DCC Office Compound, Athi River",landmark:"DCC Office Athi River",lat:-1.4700,lng:36.9700},
+  {county:"Machakos",constituency:"Machakos Town",location:"IEBC County Offices Compound, Mwatu wa Ngoma Street",landmark:"Department of Education Office",lat:-1.5170,lng:37.2636},
+  {county:"Machakos",constituency:"Mwala",location:"Makutano ya Mwala Shopping Centre",landmark:"Makutano Police Patrol Base",lat:-1.5800,lng:37.5000},
+  {county:"Makueni",constituency:"Mbooni",location:"Tawa Social Hall",landmark:"Tawa Law Courts",lat:-1.6700,lng:37.4000},
+  {county:"Makueni",constituency:"Kilome",location:"Kwa DC (Malili)",landmark:"Konza City",lat:-1.8500,lng:37.3000},
+  {county:"Makueni",constituency:"Kaiti",location:"Mukuyuni Shopping Centre, CDF Compound",landmark:"Mukuyuni Police Station",lat:-1.9000,lng:37.6000},
+  {county:"Makueni",constituency:"Makueni",location:"Wote (Chief's Camp)",landmark:"Makueni Subcounty Hospital",lat:-2.0000,lng:37.6000},
+  {county:"Makueni",constituency:"Kibwezi West",location:"Makindu Town",landmark:"DCCs Office",lat:-2.4200,lng:37.9800},
+  {county:"Makueni",constituency:"Kibwezi East",location:"Kambu Lutheran Church",landmark:"Kambu Sub County Ministry of Interior Office",lat:-2.4500,lng:38.1000},
+  {county:"Nyandarua",constituency:"Kinangop",location:"Elacy Trading Center First Floor",landmark:"North Kinangop Subcounty Headquarters",lat:-0.7300,lng:36.5500},
+  {county:"Nyandarua",constituency:"Kipipiri",location:"Kipipiri Subcounty Headquarters",landmark:"Kipipiri Subcounty Headquarters",lat:-0.6600,lng:36.5900},
+  {county:"Nyandarua",constituency:"Ol Kalou",location:"IEBC County Headquarters",landmark:"Posta Building Ol Kalou",lat:-0.2700,lng:36.3800},
+  {county:"Nyandarua",constituency:"Ol Jorok",location:"Nyandarua West Subcounty Headquarters",landmark:"Nyandarua West Subcounty Headquarters",lat:-0.4500,lng:36.4500},
+  {county:"Nyandarua",constituency:"Ndaragwa",location:"Ndaragwa Township, Next to Central Ward MCA Office",landmark:"Ndaragwa Police Station",lat:-0.1500,lng:36.7500},
+  {county:"Nyeri",constituency:"Tetu",location:"Tetu Sub County Headquarters, Wamagana",landmark:"DCC Offices / NGCDF Offices",lat:-0.4600,lng:37.0000},
+  {county:"Nyeri",constituency:"Kieni",location:"Mweiga Town",landmark:"Next To Equity ATM",lat:-0.3000,lng:37.1500},
+  {county:"Nyeri",constituency:"Mathira",location:"2nd Floor Room 18, Mathira East DCC Complex, Karatina Town",landmark:"Karatina Law Courts",lat:-0.4800,lng:37.1200},
+  {county:"Nyeri",constituency:"Othaya",location:"DCC Offices Grounds",landmark:"DCC Office",lat:-0.6000,lng:36.9500},
+  {county:"Nyeri",constituency:"Mukurwe-Ini",location:"Mukurwe-ini DCC Grounds Offices",landmark:"Near Mukurwe-ini Sub County Hospital",lat:-0.7100,lng:36.9900},
+  {county:"Nyeri",constituency:"Nyeri Town",location:"DCC Offices Grounds",landmark:"Huduma Center",lat:-0.4200,lng:36.9500},
+  {county:"Kirinyaga",constituency:"Mwea",location:"County Council Offices Wanguru",landmark:"Wanguru Police Station",lat:-0.6800,lng:37.3800},
+  {county:"Kirinyaga",constituency:"Gichugu",location:"All Saints Kianyaga ACK",landmark:"Raimu Primary School",lat:-0.5500,lng:37.4000},
+  {county:"Kirinyaga",constituency:"Ndia",location:"Baricho Town",landmark:"ACK St Philips, Baricho",lat:-0.5000,lng:37.5000},
+  {county:"Kirinyaga",constituency:"Kirinyaga Central",location:"Kerugoya Municipal Council Offices",landmark:"Kerugoya Police Station",lat:-0.5000,lng:37.2700},
+  {county:"Murang'a",constituency:"Kangema",location:"Kangema Town",landmark:"DCC's Offices",lat:-0.8000,lng:36.9000},
+  {county:"Murang'a",constituency:"Mathioya",location:"Kiria-Ini Town",landmark:"DCC's Offices",lat:-0.9000,lng:36.9500},
+  {county:"Murang'a",constituency:"Kiharu",location:"Murang'a Mukuyu, Along Kenol Murang'a Road",landmark:"Next To Rubis Petrol Station at Mukuyu",lat:-0.7200,lng:37.0000},
+  {county:"Murang'a",constituency:"Kigumo",location:"Kangari Town",landmark:"East End Mall, 3rd Floor, Kangari Town",lat:-0.8500,lng:36.9000},
+  {county:"Murang'a",constituency:"Maragwa",location:"Makuyu",landmark:"World Vision Block adjacent to ACC's Office",lat:-0.9700,lng:37.1500},
+  {county:"Murang'a",constituency:"Kandara",location:"Kandara Town",landmark:"Hurukai House, 2nd Floor, Above Amica Sacco",lat:-1.0000,lng:37.0000},
+  {county:"Murang'a",constituency:"Gatanga",location:"Kirwara Town",landmark:"Next to Amica Sacco Building, Opposite Kirwara Police Station",lat:-1.0000,lng:37.1500},
+  {county:"Kiambu",constituency:"Gatundu South",location:"DCC Compound",landmark:"Gatundu Level 5 Hospital",lat:-1.0200,lng:36.9700},
+  {county:"Kiambu",constituency:"Gatundu North",location:"Kamwangi, DCC Office",landmark:"DCC Office Kamwangi",lat:-0.9200,lng:37.0500},
+  {county:"Kiambu",constituency:"Juja",location:"Menja Vision Plaza",landmark:"Behind Agakhan Hospital",lat:-1.1050,lng:37.0100},
+  {county:"Kiambu",constituency:"Thika Town",location:"AFC Building Thika",landmark:"Buffalo Grill & Butchery",lat:-1.0332,lng:37.0693},
+  {county:"Kiambu",constituency:"Ruiru",location:"Ruiru Law Courts",landmark:"Ruiru Law Courts",lat:-1.1455,lng:36.9613},
+  {county:"Kiambu",constituency:"Githunguri",location:"DCC Compound",landmark:"DCC Offices",lat:-1.0700,lng:36.8700},
+  {county:"Kiambu",constituency:"Kiambu",location:"Kiambu Town, Mapa House 4th Floor",landmark:"National Bank",lat:-1.1712,lng:36.8350},
+  {county:"Kiambu",constituency:"Kiambaa",location:"Kiambaa Subcounty DCC Office Compound",landmark:"Kiambaa Subcounty DCC Building",lat:-1.2100,lng:36.8100},
+  {county:"Kiambu",constituency:"Kabete",location:"Kabete Sub County Government Premises, Next To Wangige Chief's Office",landmark:"Wangige Sub County Hospital",lat:-1.2500,lng:36.7500},
+  {county:"Kiambu",constituency:"Kikuyu",location:"Kikuyu Town",landmark:"K-Unity Bank",lat:-1.2500,lng:36.6800},
+  {county:"Kiambu",constituency:"Limuru",location:"Directorate Of Public Works, Limuru",landmark:"Limuru Law Courts",lat:-1.1100,lng:36.6400},
+  {county:"Kiambu",constituency:"Lari",location:"K-Unity Sacco Building, Kimende Town, Along Nairobi-Nakuru Highway",landmark:"Kimende Town",lat:-1.0500,lng:36.7000},
+  {county:"Turkana",constituency:"Turkana North",location:"DCC's Compound Lokitaung",landmark:"DCC's Office",lat:4.5000,lng:35.3000},
+  {county:"Turkana",constituency:"Turkana West",location:"Old DCC's Office Kakuma",landmark:"Refugees Affairs Services Offices",lat:3.5000,lng:34.5000},
+  {county:"Turkana",constituency:"Turkana Central",location:"DCC's Compound Lodwar",landmark:"Huduma Centre",lat:3.1190,lng:35.5950},
+  {county:"Turkana",constituency:"Loima",location:"DCC's Compound Lorgum",landmark:"DCC's Office",lat:2.5000,lng:35.3000},
+  {county:"Turkana",constituency:"Turkana South",location:"DCC's Compound Lokichar",landmark:"DCC's Office",lat:2.2000,lng:35.7000},
+  {county:"Turkana",constituency:"Turkana East",location:"DCC's Compound Lokori",landmark:"DCC's Office",lat:2.8000,lng:36.3000},
+  {county:"West Pokot",constituency:"Kapenguria",location:"Deputy Commissioner's Compound",landmark:"DCC Offices",lat:1.2400,lng:35.1100},
+  {county:"West Pokot",constituency:"Sigor",location:"KVDA",landmark:"KVDA Offices",lat:1.6000,lng:35.2500},
+  {county:"West Pokot",constituency:"Kacheliba",location:"Holy Cross Catholic Church Kacheliba",landmark:"Catholic Church",lat:1.5500,lng:34.8000},
+  {county:"West Pokot",constituency:"Pokot South",location:"St Marks Development Centre",landmark:"DCC Offices",lat:0.9000,lng:35.2000},
+  {county:"Samburu",constituency:"Samburu West",location:"Maralal Town",landmark:"Samburu County Assembly",lat:1.0800,lng:36.7000},
+  {county:"Samburu",constituency:"Samburu North",location:"Baragoi Town",landmark:"DCC Office",lat:1.8500,lng:36.9000},
+  {county:"Samburu",constituency:"Samburu East",location:"Wamba Town",landmark:"Wamba Parish",lat:0.8000,lng:37.2000},
+  {county:"Trans Nzoia",constituency:"Kwanza",location:"KFA Building, Kitale Town",landmark:"KFA Building",lat:1.0200,lng:35.0000},
+  {county:"Trans Nzoia",constituency:"Endebess",location:"Endebess Centre",landmark:"DCCs Office",lat:1.1500,lng:34.9000},
+  {county:"Trans Nzoia",constituency:"Saboti",location:"Maendeleo ya Wanawake Building, Old Ambwere Plaza, Kitale",landmark:"Old Ambwere Plaza",lat:1.1000,lng:34.9800},
+  {county:"Trans Nzoia",constituency:"Kiminini",location:"Kiminini Centre",landmark:"St Peters Cleavers Catholic Church",lat:1.1500,lng:35.0500},
+  {county:"Trans Nzoia",constituency:"Cherangany",location:"Kachibora, DCCs Office",landmark:"DCCs Office",lat:1.3000,lng:35.2500},
+  {county:"Uasin Gishu",constituency:"Soy",location:"Meadows Plaza, Opposite Sirikwa Hotel",landmark:"Meadows Plaza",lat:0.5700,lng:35.0000},
+  {county:"Uasin Gishu",constituency:"Turbo",location:"Within NCCK North Headquarters, West Indies",landmark:"NCCK North Headquarters",lat:0.6200,lng:35.0400},
+  {county:"Uasin Gishu",constituency:"Moiben",location:"Kimumu Ward Administrative Offices, Ainabtich, Eldoret",landmark:"Kimumu Ward Administrative Offices",lat:0.7100,lng:35.2600},
+  {county:"Uasin Gishu",constituency:"Ainabkoi",location:"Adjacent To Eldoret East District HQ, Off Kapsoya Road",landmark:"Eldoret East District HQ",lat:0.5200,lng:35.3000},
+  {county:"Uasin Gishu",constituency:"Kapseret",location:"Inside RCEA Ushirika Church Compound, Opposite Hills School",landmark:"RCEA Ushirika Church",lat:0.4000,lng:35.2000},
+  {county:"Uasin Gishu",constituency:"Kesses",location:"Jamboni Complex Near DCC's Office",landmark:"Moi University Law School",lat:0.3200,lng:35.3500},
+  {county:"Elgeyo Marakwet",constituency:"Marakwet East",location:"Chesoi DCC Compound",landmark:"DCC Office",lat:1.2500,lng:35.6000},
+  {county:"Elgeyo Marakwet",constituency:"Marakwet West",location:"Kapsowar IEBC Office",landmark:"IEBC Office",lat:1.0500,lng:35.5000},
+  {county:"Elgeyo Marakwet",constituency:"Keiyo North",location:"IEBC Office",landmark:"County Governor Office",lat:0.5500,lng:35.5000},
+  {county:"Elgeyo Marakwet",constituency:"Keiyo South",location:"Chepkorio Prime Tower Sacco",landmark:"Prime Tower Sacco Society",lat:0.4000,lng:35.5000},
+  {county:"Nandi",constituency:"Mosop",location:"Kabiyet, Nandi North District Headquarters",landmark:"Nandi North District Headquarters",lat:0.6200,lng:35.3500},
+  {county:"Nandi",constituency:"Nandi Hills",location:"Nandi Hills Town, Ministry of Public Works",landmark:"Nandi Water Supply",lat:0.1000,lng:35.1700},
+  {county:"Nandi",constituency:"Emgwen",location:"Ministry of Lands Kapsabet",landmark:"Ministry of Lands / ACC Office",lat:0.2000,lng:35.1000},
+  {county:"Nandi",constituency:"Chesumei",location:"Cheptarit Catholic Church, Mosoriot",landmark:"Cheptarit Catholic Church",lat:0.1500,lng:35.0200},
+  {county:"Nandi",constituency:"Aldai",location:"St. Pauls Catholic Church, Within Kobujoi Town",landmark:"St. Pauls Catholic Church",lat:0.0300,lng:35.1700},
+  {county:"Nandi",constituency:"Tindiret",location:"Senetwo Social Hall",landmark:"Senetwo Primary School",lat:-0.1500,lng:35.2200},
+  {county:"Baringo",constituency:"Tiaty",location:"Next To Ministry Of Education Offices, Chemolingot",landmark:"Chemolingot",lat:1.6000,lng:36.0000},
+  {county:"Baringo",constituency:"Baringo North",location:"Behind Posta Building",landmark:"Posta Building, Baringo North",lat:1.3500,lng:35.9500},
+  {county:"Baringo",constituency:"Baringo Central",location:"County Commissioners Premises, Opposite Posta Building, Kabarnet",landmark:"County Commissioners Premises",lat:0.5000,lng:35.7400},
+  {county:"Baringo",constituency:"Baringo South",location:"Deputy County Commissioner's Compound",landmark:"District HQ Marigat",lat:0.2500,lng:36.0000},
+  {county:"Baringo",constituency:"Mogotio",location:"Behind Boresha Sacco",landmark:"Boresha Sacco, Mogotio Township",lat:0.1500,lng:35.9000},
+  {county:"Baringo",constituency:"Eldama Ravine",location:"Sub County Commissioner's Compound, Eldama Ravine",landmark:"Law Courts, Eldama Ravine",lat:0.0500,lng:35.7200},
+  {county:"Laikipia",constituency:"Laikipia West",location:"Telkom Building, Nyahururu Town",landmark:"Nyahururu Law Courts",lat:0.0300,lng:36.3500},
+  {county:"Laikipia",constituency:"Laikipia East",location:"Laikipia County Commissioners Compound, Nanyuki",landmark:"County Commissioners Office",lat:0.1200,lng:37.0700},
+  {county:"Laikipia",constituency:"Laikipia North",location:"Doldol Catholic Parish Compound",landmark:"Doldol Catholic Church",lat:0.5000,lng:37.0000},
+  {county:"Nakuru",constituency:"Molo",location:"DCC's Compound, Molo Town",landmark:"DC's Office, Molo Town",lat:-0.2600,lng:35.7300},
+  {county:"Nakuru",constituency:"Njoro",location:"AIC Church Compound, Njoro",landmark:"AIC Church, Njoro",lat:-0.3300,lng:35.9500},
+  {county:"Nakuru",constituency:"Naivasha",location:"DCC's Compound, Near Naivasha Police Station",landmark:"Naivasha Police Station",lat:-0.7170,lng:36.4310},
+  {county:"Nakuru",constituency:"Gilgil",location:"Hennsolex Building, Ground Floor, Gilgil Town",landmark:"KPLC, Gilgil",lat:-0.5000,lng:36.3100},
+  {county:"Nakuru",constituency:"Kuresoi South",location:"Keringet Centre, Keringet Mall",landmark:"Keringet Centre",lat:-0.1500,lng:35.7000},
+  {county:"Nakuru",constituency:"Kuresoi North",location:"Kuresoi North Sub County Offices, Sachoran Centre",landmark:"Kuresoi North Sub County Offices",lat:0.0000,lng:35.6000},
+  {county:"Nakuru",constituency:"Subukia",location:"Behind Top Care Hospital",landmark:"Subukia-Nakuru Highway",lat:0.0600,lng:36.1500},
+  {county:"Nakuru",constituency:"Rongai",location:"IEBC Kampi Ya Moto, Behind DC Office",landmark:"Kampi Ya Moto Trading Center",lat:0.2000,lng:35.8500},
+  {county:"Nakuru",constituency:"Bahati",location:"DO's Compound, Kiamaina/Maili Sita, Bahati",landmark:"DO's Office Kiamaina",lat:-0.2000,lng:36.2500},
+  {county:"Nakuru",constituency:"Nakuru Town West",location:"County Council Offices, Opposite Kenya Farmers Association",landmark:"KFA Roundabout, Nakuru Town",lat:-0.3031,lng:36.0800},
+  {county:"Nakuru",constituency:"Nakuru Town East",location:"Catholic Diocese Nakuru Compound",landmark:"Mercy Mission Hospital / Assumption Center",lat:-0.2800,lng:36.0800},
+  {county:"Narok",constituency:"Kilgoris",location:"Old Kilgoris County Council Offices",landmark:"Cooperative Bank Kilgoris",lat:-1.0000,lng:34.9000},
+  {county:"Narok",constituency:"Emurua Dikkir",location:"Emurua Dikkir Sub County Offices",landmark:"Sub County Offices",lat:-1.1000,lng:35.5000},
+  {county:"Narok",constituency:"Narok North",location:"Narok North CDF Offices",landmark:"Narok County Commissioner Offices",lat:-1.0850,lng:35.8710},
+  {county:"Narok",constituency:"Narok East",location:"Ntulele",landmark:"Ntulele Police Station",lat:-1.3000,lng:36.0000},
+  {county:"Narok",constituency:"Narok South",location:"Ololulunga",landmark:"Ololulunga Police Station",lat:-1.7000,lng:35.6000},
+  {county:"Narok",constituency:"Narok West",location:"Ngoswani Centre",landmark:"Drilled Water Solar Powerpoint",lat:-1.3000,lng:35.5000},
+  {county:"Kajiado",constituency:"Kajiado North",location:"Ngong DCC Office",landmark:"Ngong DCC Office",lat:-1.3670,lng:36.6560},
+  {county:"Kajiado",constituency:"Kajiado Central",location:"ACK Tenebo House",landmark:"Kajiado Total Petrol Station",lat:-1.8540,lng:36.7763},
+  {county:"Kajiado",constituency:"Kajiado East",location:"Isinya Multi-Purpose",landmark:"Moi Girls High School Isinya",lat:-1.6500,lng:36.9000},
+  {county:"Kajiado",constituency:"Kajiado West",location:"St Mary's Catholic Church, Kiserian",landmark:"St Mary's Catholic Church",lat:-1.4000,lng:36.5500},
+  {county:"Kajiado",constituency:"Kajiado South",location:"Kajiado County Government Revenue Office",landmark:"Loitoktok DCC Office",lat:-2.4700,lng:37.1000},
+  {county:"Kericho",constituency:"Ainamoi",location:"County Commissioner's Compound",landmark:"20 Meters from County Commissioners Gate",lat:-0.3700,lng:35.2900},
+  {county:"Kericho",constituency:"Bureti",location:"Litein Town, Patnas Plaza",landmark:"Patnas Plaza",lat:-0.5500,lng:35.1300},
+  {county:"Kericho",constituency:"Belgut",location:"Rev. Temuga Plaza, Opposite DCC Office",landmark:"Sosiot Police Station",lat:-0.4000,lng:35.4000},
+  {county:"Kericho",constituency:"Sigowet Soin",location:"Soko Huru Center, Inside Police Post Compound",landmark:"Mathioyo Stadium",lat:-0.6000,lng:35.0500},
+  {county:"Kericho",constituency:"Kipkelion East",location:"Within Londiani Post Office Compound",landmark:"Londiani Post Office",lat:-0.2000,lng:35.6000},
+  {county:"Kericho",constituency:"Kipkelion West",location:"Posta Kenya Building, Kipkelion Town",landmark:"Kipkelion Post Office",lat:-0.2500,lng:35.5500},
+  {county:"Bomet",constituency:"Chepalungu",location:"Sigor AGC Church",landmark:"Junction to Sigor Township",lat:-0.7000,lng:35.3500},
+  {county:"Bomet",constituency:"Bomet Central",location:"Bomet Town",landmark:"NCPB",lat:-0.7870,lng:35.3410},
+  {county:"Bomet",constituency:"Konoin",location:"Mogogsiek, DCC Office Konoin Subcounty",landmark:"DCC Office",lat:-0.8500,lng:35.2000},
+  {county:"Bomet",constituency:"Bomet East",location:"AFC Building, Bomet Town",landmark:"Shell Petrol Station",lat:-0.7500,lng:35.4000},
+  {county:"Bomet",constituency:"Sotik",location:"Ministry of Agriculture",landmark:"Opposite CDF Office",lat:-0.7000,lng:35.1500},
+  {county:"Kakamega",constituency:"Lugari",location:"Lumakanda Centre",landmark:"Lumakanda PAG Church",lat:0.5200,lng:34.9500},
+  {county:"Kakamega",constituency:"Likuyani",location:"PAG Kongoni Church Compound",landmark:"Next to Likuyani Sub-County Offices",lat:0.3800,lng:34.7000},
+  {county:"Kakamega",constituency:"Malava",location:"Malava Friends Church Compound",landmark:"Malava Boys High School",lat:0.4700,lng:34.8600},
+  {county:"Kakamega",constituency:"Lurambi",location:"Post Office",landmark:"Huduma Center",lat:0.2800,lng:34.7400},
+  {county:"Kakamega",constituency:"Navakholo",location:"Opposite Dowa Filling Station, Along Navakholo Road",landmark:"Dowa Filling Station",lat:0.3500,lng:34.6000},
+  {county:"Kakamega",constituency:"Mumias West",location:"ACK Guest House",landmark:"ACK Church Complex",lat:0.3300,lng:34.4800},
+  {county:"Kakamega",constituency:"Mumias East",location:"Moco Buildings, Shianda",landmark:"Shianda Catholic Church",lat:0.3300,lng:34.5500},
+  {county:"Kakamega",constituency:"Matungu",location:"Matungu Market, Along Matungu Kholera Road",landmark:"Matungu Deputy County Commissioner's",lat:0.2000,lng:34.5000},
+  {county:"Kakamega",constituency:"Butere",location:"Butere DCC Compound, Next to Kenya Forest Service Office",landmark:"Deputy County Commissioner's Office",lat:0.2000,lng:34.5000},
+  {county:"Kakamega",constituency:"Khwisero",location:"Within DCC's Offices",landmark:"DCC's Office",lat:0.1500,lng:34.5500},
+  {county:"Kakamega",constituency:"Shinyalu",location:"Shinyalu Market",landmark:"St. Acquinas Teachers College",lat:0.3600,lng:34.7600},
+  {county:"Kakamega",constituency:"Ikolomani",location:"Sub-County Registrar of Persons Office",landmark:"Malinya Primary School",lat:0.3000,lng:34.7500},
+  {county:"Vihiga",constituency:"Vihiga",location:"Vihiga Educational Resource Centre",landmark:"Vihiga High School",lat:0.0700,lng:34.7200},
+  {county:"Vihiga",constituency:"Sabatia",location:"DCC Compound",landmark:"Sabatia Eye Hospital",lat:0.1700,lng:34.6900},
+  {county:"Vihiga",constituency:"Hamisi",location:"Hamisi Youth Empowerment Centre",landmark:"Hamisi Sub-County Hospital",lat:0.1000,lng:34.7600},
+  {county:"Vihiga",constituency:"Luanda",location:"Luanda Centre",landmark:"Bunyore Girls High School",lat:0.0800,lng:34.6300},
+  {county:"Vihiga",constituency:"Emuhaya",location:"Esibuye Centre",landmark:"Bunyore Medical Hospital",lat:0.0600,lng:34.6700},
+  {county:"Bungoma",constituency:"Mt. Elgon",location:"Kapsokwony",landmark:"Koony House",lat:1.0000,lng:34.7000},
+  {county:"Bungoma",constituency:"Sirisia",location:"DCC Compound",landmark:"Sirisia DCC Office",lat:0.6600,lng:34.5500},
+  {county:"Bungoma",constituency:"Kabuchai",location:"Behind Kabuchai CDF Compound",landmark:"Along Kanduyi Chwele Road",lat:0.5600,lng:34.5000},
+  {county:"Bungoma",constituency:"Bumula",location:"Bumula DCC Office",landmark:"DCC Compound",lat:0.5800,lng:34.4500},
+  {county:"Bungoma",constituency:"Kanduyi",location:"Bungoma Cereals Board",landmark:"Silos",lat:0.5600,lng:34.5600},
+  {county:"Bungoma",constituency:"Webuye East",location:"DCC Compound / Along Webuye Kitale Road",landmark:"DCC Compound / T-Junction",lat:0.6100,lng:34.7700},
+  {county:"Bungoma",constituency:"Webuye West",location:"Matisi Market",landmark:"Webuye West CDF Offices",lat:0.6200,lng:34.7500},
+  {county:"Bungoma",constituency:"Kimilili",location:"Great Lounch Hotel Building",landmark:"Opposite Kimilili Deb Primary",lat:0.7800,lng:34.7100},
+  {county:"Bungoma",constituency:"Tongaren",location:"Within Bungoma North Sub-County Headquarters",landmark:"National Government CDF Offices",lat:0.5500,lng:34.7500},
+  {county:"Busia",constituency:"Teso North",location:"DCC's Compound",landmark:"Law Courts",lat:0.4800,lng:34.2500},
+  {county:"Busia",constituency:"Teso South",location:"DCC's Compound",landmark:"DCC's Building",lat:0.4000,lng:34.3000},
+  {county:"Busia",constituency:"Nambale",location:"DCC's Compound",landmark:"DCC's Building",lat:0.3200,lng:34.4000},
+  {county:"Busia",constituency:"Matayos",location:"Assistant County Commissioner's Compound",landmark:"ACC's Office",lat:0.3500,lng:34.2400},
+  {county:"Busia",constituency:"Butula",location:"DCC's Compound",landmark:"Butula Police Station",lat:0.5200,lng:34.2200},
+  {county:"Busia",constituency:"Funyula",location:"Funyula Market",landmark:"Moody Awori Primary School",lat:0.5500,lng:34.1000},
+  {county:"Busia",constituency:"Budalangi",location:"Budalangi Market",landmark:"Budalangi Primary School",lat:0.1000,lng:34.1500},
+  {county:"Siaya",constituency:"Ugenya",location:"Ukwala, Opposite Sub County Officers",landmark:"Posta Ukwala",lat:0.2000,lng:34.2500},
+  {county:"Siaya",constituency:"Ugunja",location:"Along Savana-Ambira Hospital Road",landmark:"Savana Hotel",lat:0.1700,lng:34.2500},
+  {county:"Siaya",constituency:"Alego Usonga",location:"Siaya Town, County Commissioners Office Compound",landmark:"County Commissioner's Office",lat:0.1600,lng:34.3000},
+  {county:"Siaya",constituency:"Gem",location:"Nyangweso Market Centre, Adjacent to IDS Office",landmark:"Sawagongo High School",lat:0.1000,lng:34.3000},
+  {county:"Siaya",constituency:"Bondo",location:"Adjacent Municipal Offices, Next to Bondo Law Court",landmark:"Bondo Law Courts",lat:-0.0500,lng:34.2700},
+  {county:"Siaya",constituency:"Rarieda",location:"Kalandini Market Centre, Within Rarieda KERRA Compound",landmark:"Kalandini Market",lat:-0.2000,lng:34.2500},
+  {county:"Kisumu",constituency:"Nyando",location:"Awasi DCC Compound",landmark:"Awasi DCC",lat:-0.2500,lng:35.0000},
+  {county:"Kisumu",constituency:"Muhoroni",location:"Awasi, Opposite Pawtenge Primary",landmark:"Pawtenge Primary",lat:-0.1400,lng:35.2000},
+  {county:"Kisumu",constituency:"Nyakach",location:"Pap Onditi DCC Compound",landmark:"Pap Onditi DCC",lat:-0.4000,lng:34.9500},
+  {county:"Kisumu",constituency:"Seme",location:"Kombewa DCC Compound",landmark:"Kombewa DCC",lat:-0.1200,lng:34.6000},
+  {county:"Kisumu",constituency:"Kisumu West",location:"DCCs Office Block Opposite New DCCs/Huduma Centre",landmark:"CDF Office Blocks at Ojola",lat:-0.0950,lng:34.7290},
+  {county:"Kisumu",constituency:"Kisumu East",location:"Mamboleo Show Ground",landmark:"Mamboleo Show Ground",lat:-0.0600,lng:34.8100},
+  {county:"Kisumu",constituency:"Kisumu Central",location:"Huduma Centre Wing C, Ground Floor",landmark:"Huduma Centre",lat:-0.1017,lng:34.7617},
+  {county:"Homabay",constituency:"Kasipul",location:"Within Karachuonyo South DCC Compound at Kosele",landmark:"Along Oyugis-Kendu Bay Road",lat:-0.4500,lng:34.9500},
+  {county:"Homabay",constituency:"Kabondo Kasipul",location:"At Kadongo Centre Along Kisii-Kisumu Road",landmark:"Kadongo Centre",lat:-0.4000,lng:34.7500},
+  {county:"Homabay",constituency:"Karachuonyo",location:"Within Rachuonyo North DCC Complex at Kamodi",landmark:"Along Kendubay Oyugis Road",lat:-0.4500,lng:34.8500},
+  {county:"Homabay",constituency:"Rangwe",location:"Within New Rangwe DCC's Complex",landmark:"Along Oyugis-Rangwe-Homabay Road",lat:-0.5500,lng:34.7500},
+  {county:"Homabay",constituency:"Homa Bay Town",location:"Behind CC's Complex in Homabay Town",landmark:"County Commissioner's Complex",lat:-0.5270,lng:34.4580},
+  {county:"Homabay",constituency:"Ndhiwa",location:"Within Ndhiwa Sub County DCC Complex",landmark:"Along Ndhiwa Sori Road",lat:-0.7000,lng:34.5000},
+  {county:"Homabay",constituency:"Suba North",location:"Inside Suba North Sub County Compound",landmark:"Along Mbita Rusinga Road",lat:-0.4500,lng:34.2000},
+  {county:"Homabay",constituency:"Suba South",location:"At Magunga Trading Centre",landmark:"Along Kiabuya-Magunga-Sindo Road",lat:-0.6500,lng:34.2500},
+  {county:"Migori",constituency:"Rongo",location:"Rongo Town, DCC Office Rongo Sub County",landmark:"DCC Office",lat:-1.1530,lng:34.6130},
+  {county:"Migori",constituency:"Awendo",location:"Awendo Town",landmark:"NCPB Awendo",lat:-0.9000,lng:34.9000},
+  {county:"Migori",constituency:"Suna East",location:"Migori Town",landmark:"Migori County IEBC Office",lat:-1.0600,lng:34.4800},
+  {county:"Migori",constituency:"Suna West",location:"Migori Town",landmark:"NCPB / Namba Junction",lat:-1.1000,lng:34.4000},
+  {county:"Migori",constituency:"Uriri",location:"Uriri Town, DCC Office Uriri Sub County",landmark:"DCC Office",lat:-0.8000,lng:34.6500},
+  {county:"Migori",constituency:"Nyatike",location:"Macalda Town",landmark:"County Government Office Macalda",lat:-0.9500,lng:34.2500},
+  {county:"Migori",constituency:"Kuria West",location:"Kehancha Town",landmark:"Kehancha Law Courts",lat:-1.3000,lng:34.7500},
+  {county:"Migori",constituency:"Kuria East",location:"Kegonga Town, DCC Office Kuria East Sub County",landmark:"DCC's Office",lat:-1.3500,lng:34.9500},
+  {county:"Kisii",constituency:"Bonchari",location:"Suneka Market",landmark:"Itierio Boys High School",lat:-0.7500,lng:34.8000},
+  {county:"Kisii",constituency:"South Mugirango",location:"Nyamarambe",landmark:"DCC's Office",lat:-0.8000,lng:34.8500},
+  {county:"Kisii",constituency:"Bomachoge Borabu",location:"Kenyanya Market Centre",landmark:"DCC's Office",lat:-0.9000,lng:34.9000},
+  {county:"Kisii",constituency:"Bobasi",location:"Itumbe",landmark:"DCC's Office",lat:-0.8500,lng:34.9500},
+  {county:"Kisii",constituency:"Bomachoge Chache",location:"Ogembo",landmark:"DCC's Office",lat:-0.8500,lng:34.8500},
+  {county:"Kisii",constituency:"Nyaribari Masaba",location:"Masimba",landmark:"DCC's Office",lat:-0.6800,lng:34.8500},
+  {county:"Kisii",constituency:"Nyaribari Chache",location:"Kisii Town",landmark:"County Commissioner's Office",lat:-0.6820,lng:34.7660},
+  {county:"Kisii",constituency:"Kitutu Chache North",location:"Marani Centre",landmark:"Marani Sub-County Office",lat:-0.7000,lng:34.7500},
+  {county:"Kisii",constituency:"Kitutu Chache South",location:"Kisii Town",landmark:"County Commissioner's Office",lat:-0.7500,lng:34.7500},
+  {county:"Nyamira",constituency:"Kitutu Masaba",location:"Manga DCC Compound",landmark:"Manga Cliff",lat:-0.5500,lng:34.9500},
+  {county:"Nyamira",constituency:"West Mugirango",location:"Nyamira Town",landmark:"County Commissioners' Headquarters (Next to Nyamira Law Courts)",lat:-0.5700,lng:34.9200},
+  {county:"Nyamira",constituency:"North Mugirango",location:"Ekerenyo Market",landmark:"Ekerenyo Bus Stage",lat:-0.4500,lng:34.9500},
+  {county:"Nyamira",constituency:"Borabu",location:"DCC Office Compound in Kijauri Town",landmark:"DCC Office",lat:-0.6500,lng:35.0500}
+];
+
+// Haversine formula
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function mapsUrl(c) {
+  const q = encodeURIComponent(`IEBC ${c.constituency} Constituency Office ${c.county} Kenya`);
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+function renderCard(c, rank, distKm) {
+  const dist = distKm !== undefined ? `<span class="distance-badge">📏 ${distKm < 1 ? (distKm*1000).toFixed(0)+'m' : distKm.toFixed(1)+' km'}</span>` : '';
+  const rankBadge = rank ? `<span class="rank-num">${rank}</span>` : '';
+  return `
+  <div class="result-card">
+    <div class="result-header">
+      <div class="result-title">${rankBadge}🏛️ ${c.constituency} Constituency Office — ${c.county} County</div>
+      ${dist}
+    </div>
+    <div class="result-row"><span class="icon">📍</span><span><strong>Office:</strong> ${c.location}</span></div>
+    <div class="result-row"><span class="icon">🏛️</span><span><strong>Near:</strong> ${c.landmark}</span></div>
+    <div class="result-row"><span class="icon">🗺️</span><a href="${mapsUrl(c)}" target="_blank" rel="noopener">View on Google Maps</a></div>
+    <div class="result-meta">
+      <div class="result-row"><span class="icon">📋</span><span>Required: Original National ID Card (or Passport)</span></div>
+      <div class="result-row"><span class="icon">⏰</span><span>Hours: Mon–Fri 8:00 AM – 5:00 PM (verify with IEBC)</span></div>
+    </div>
+    <div class="result-footer">
+      <button class="btn-share" onclick="shareCenter(${JSON.stringify(c).replace(/"/g,'&quot;')})">📤 Share</button>
+    </div>
+  </div>`;
+}
+
+function opsecTip() {
+  return `<div class="opsec-tip">🛡️ <strong>Privacy Tip:</strong> After finding your center, clear your browser history or use a private/incognito window.</div>`;
+}
+
+function shareCenter(c) {
+  const text = `IEBC Voter Registration Office\n${c.constituency} Constituency — ${c.county} County\n📍 ${c.location}\n🏛️ Near: ${c.landmark}\n${mapsUrl(c)}`;
+  if (navigator.share) {
+    navigator.share({title:`IEBC ${c.constituency} Office`, text, url: mapsUrl(c)}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard!')).catch(()=>alert(text));
+  }
+}
+
+// GPS Mode
+function useGPS() {
+  const btn = document.getElementById('gps-btn');
+  const status = document.getElementById('gps-status');
+  const results = document.getElementById('gps-results');
+  btn.disabled = true;
+  status.innerHTML = '<span class="loading-spinner"></span> Getting your location…';
+  results.innerHTML = '';
+  if (!navigator.geolocation) {
+    status.innerHTML = '<span class="status-msg error">❌ Geolocation not supported by your browser.</span>';
+    btn.disabled = false;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const {latitude: lat, longitude: lng} = pos.coords;
+      const sorted = CENTERS.map(c => ({...c, dist: haversine(lat, lng, c.lat, c.lng)}))
+        .sort((a,b) => a.dist - b.dist).slice(0, 3);
+      status.innerHTML = '<span class="status-msg">✅ Found! Showing 3 nearest centers.</span>';
+      results.innerHTML = sorted.map((c,i) => renderCard(c, i+1, c.dist)).join('') + opsecTip();
+      btn.disabled = false;
+      btn.textContent = '📍 Update Location';
+    },
+    err => {
+      const msgs = {1:'Location permission denied.', 2:'Location unavailable.', 3:'Request timed out.'};
+      status.innerHTML = `<span class="status-msg error">❌ ${msgs[err.code]||'Unknown error.'} Try Browse Mode instead.</span>`;
+      btn.disabled = false;
+    },
+    {timeout:15000, maximumAge:60000}
+  );
+}
+
+// Browse Mode
+const counties = [...new Set(CENTERS.map(c=>c.county))].sort();
+const countySelect = document.getElementById('county-select');
+const constituencySelect = document.getElementById('constituency-select');
+counties.forEach(county => {
+  const opt = document.createElement('option');
+  opt.value = county; opt.textContent = county;
+  countySelect.appendChild(opt);
+});
+
+function onCountyChange() {
+  const county = countySelect.value;
+  constituencySelect.innerHTML = '<option value="">— Select a constituency —</option>';
+  document.getElementById('browse-results').innerHTML = '';
+  if (!county) { constituencySelect.disabled = true; return; }
+  const consts = CENTERS.filter(c=>c.county===county).map(c=>c.constituency).sort();
+  consts.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    constituencySelect.appendChild(opt);
+  });
+  constituencySelect.disabled = false;
+}
+
+function onConstituencyChange() {
+  const county = countySelect.value;
+  const constituency = constituencySelect.value;
+  const resultsEl = document.getElementById('browse-results');
+  if (!constituency) { resultsEl.innerHTML = ''; return; }
+  const center = CENTERS.find(c=>c.county===county && c.constituency===constituency);
+  if (center) {
+    resultsEl.innerHTML = renderCard(center, null, undefined) + opsecTip();
+  }
+}
+
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
